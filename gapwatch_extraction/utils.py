@@ -165,7 +165,6 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
 
 # PCA functions
 
-
 def pca_emg(emg_data, n_components, scale_U=False, random_state=None, svd_solver='full'):
     """
     Applies Principal Component Analysis (PCA).
@@ -236,6 +235,63 @@ def pca_emg_reconstruction(U, S_m, mean, n_components):
     return reconstructed
 
 #-------------------------------------------------------------------------------------------
+
+
+# NMF functions
+
+def nmf_emg(emg_data, n_components, init, max_iter, l1_ratio, alpha_W, random_state):
+    """
+    Applies Non-negative Matrix Factorization (NMF) to EMG data.
+
+    Args:
+        emg_data: Input EMG data (n_samples x n_muscles).
+        n_components: Number of synergies to extract.
+        init: Initialization method for NMF. 
+        max_iter: Maximum number of iterations for NMF.
+        l1_ratio: L1 ratio for sparse NMF.
+        alpha_W: Regularization parameter for U matrix in NMF.
+        random_state: Random seed for reproducibility.
+
+    Outputs:
+        U: Synergy activations over time (Neural drive matrix)
+        S_m: Muscle patterns (Muscular synergy matrix)
+
+    """
+    # Pushing initial negative data to 0 for NMF processing
+    emg_data_non_negative = np.maximum(0, emg_data)  # Ensure all values are non-negative
+    
+    print("\nApplying NMF...")
+    nmf = NMF(n_components=n_components, init=init, max_iter=max_iter, l1_ratio=l1_ratio, alpha_W=alpha_W, random_state=random_state) # Setting Sparse NMF parameters
+    U = nmf.fit_transform(emg_data_non_negative)         # Synergy activations over time (Neural drive matrix)
+    S_m = nmf.components_                   # Muscle patterns (Muscular synergy matrix)
+    
+    # Transpose W and H to match the correct shapes if needed
+    if U.shape[0] != emg_data_non_negative.shape[0]:
+        U = U.T         # Ensure U has shape (n_samples, n_synergies)
+    if S_m.shape[0] != n_components:
+        S_m = S_m.T     # Ensure S_m has shape (n_synergies, n_muscles)
+    print("NMF completed.\n")
+    return U, S_m
+
+
+def nmf_emg_reconstruction(U, S_m, n_synergies):
+    print(f"\nReconstructing the signal with {n_synergies} synergies...")
+    # Select the first n_synergies components
+    U_rec = U[:, :n_synergies]
+    S_m_rec = S_m[:n_synergies, :]
+
+    # Reconstruct the original data from the selected components
+    reconstructed = np.dot(U_rec, S_m_rec)
+    print("Reconstruction completed.\n")
+    return reconstructed
+
+
+#--------------------------------------------------------------------------------------------
+
+
+
+
+
 
 
 

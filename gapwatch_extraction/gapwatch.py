@@ -4,12 +4,12 @@ from gapwatch_extraction.utils import *
 # Path and topic 
 selected_topic = '/emg'
 
-pinch_serra =       'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/pinch_serra.bag'
-ulnar_serra =       'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/ulnar_serra.bag'
-power_serra =       'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/power_serra.bag'
-molto_power_papi =  'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/molto_power_papi.bag'
-super_power_matti = 'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/super_power_matti.bag'
-fuck_matti =        'C:/Users/ricca/Desktop/th_unibo/code/gapwatch/dataset/fuck_matti.bag'
+pinch_serra =       'dataset/pinch_serra.bag'
+ulnar_serra =       'dataset/ulnar_serra.bag'
+power_serra =       'dataset/power_serra.bag'
+molto_power_papi =  'dataset/molto_power_papi.bag'
+super_power_matti = 'dataset/super_power_matti.bag'
+fuck_matti =        'dataset/fuck_matti.bag'
 
 ########################################################################
 
@@ -19,6 +19,7 @@ emg_data = []
 
 # Set chosen bag file
 bag_path = super_power_matti
+
 
 # Reading data from the bag file and setting up data
 with rosbag.Bag(bag_path, 'r') as bag:
@@ -35,7 +36,6 @@ with rosbag.Bag(bag_path, 'r') as bag:
 
 # Check emg data length
 print(len(emg_data))
-
 
 
 # Algorithm to reshape data: from 1 line of concatenated data to 16 channel data
@@ -62,14 +62,20 @@ plot_emg_channels_2cols(final_emg)
 plot_all_channels(final_emg)
 
 
-# PCA application
+"""# PCA application
 optimal_synergies_pca = 3
 final_emg_for_pca = final_emg.T # Transpose to have samples as rows and channels as columns, better for pca analysis and plotting
 S_m, U, mean, rec = pca_emg(final_emg_for_pca, optimal_synergies_pca, random_state=42, svd_solver='full')
-reconstructed = pca_emg_reconstruction(U, S_m, mean, optimal_synergies_pca)
+reconstructed_pca = pca_emg_reconstruction(U, S_m, mean, optimal_synergies_pca)
 final_emg_np = final_emg if isinstance(final_emg, np.ndarray) else final_emg.numpy() # needed for plotting
-plot_all_results(final_emg_for_pca, reconstructed, U, S_m, optimal_synergies_pca)
+plot_all_results(final_emg_for_pca, reconstructed_pca, U, S_m, optimal_synergies_pca)
+"""
 
 
-
-
+"""# Sparse NMF application (for Classical NMF change init type from 'nnsvd' to 'nnsvdar')
+optimal_synergies_nmf = 3
+final_emg_for_nmf = final_emg.T # Transpose to have samples as rows and channels as columns, better for pca analysis and plotting
+U, S_m = nmf_emg(final_emg_for_nmf, n_components=optimal_synergies_nmf, init='nndsvd', max_iter=200, l1_ratio=0.7, alpha_W=0.01, random_state=42)
+reconstructed_nmf = nmf_emg_reconstruction(U, S_m, optimal_synergies_nmf)
+plot_all_results(final_emg_for_nmf, reconstructed_nmf, U, S_m, optimal_synergies_nmf)
+"""
