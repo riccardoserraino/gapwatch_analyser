@@ -15,6 +15,7 @@ power_serra =       'dataset/power_serra.bag'
 molto_power_papi =  'dataset/molto_power_papi.bag'
 super_power_matti = 'dataset/super_power_matti.bag'
 fuck_matti =        'dataset/fuck_matti.bag'
+new = 'dataset/2025-05-23-10-32-21.bag'
 
 ########################################################################
 # Read EMG data from selected ROS bag file
@@ -24,7 +25,7 @@ fuck_matti =        'dataset/fuck_matti.bag'
 emg_data = []
 
 # Choose which bag file to load
-bag_path = super_power_matti  # <-- Change here to use a different file
+bag_path = new  # <-- Change here to use a different file
 
 # Open the bag and extract EMG values from messages
 with rosbag.Bag(bag_path, 'r') as bag:
@@ -84,7 +85,7 @@ plot_all_results(final_emg_for_pca, reconstructed_pca, U, S_m, optimal_synergies
 # Sparse NMF Synergy Extraction
 ########################################################################
 
-"""
+
 # Apply Sparse Non-negative Matrix Factorization (NMF) to extract synergies
 optimal_synergies_nmf = 3
 final_emg_for_nmf = final_emg.T  # Transpose for sklearn compatibility
@@ -98,7 +99,6 @@ reconstructed_nmf = nmf_emg_reconstruction(U, S_m, optimal_synergies_nmf)
 
 # Plot original, reconstructed, and synergy data
 plot_all_results(final_emg_for_nmf, reconstructed_nmf, U, S_m, optimal_synergies_nmf)
-"""
 
 
 

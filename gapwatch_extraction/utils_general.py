@@ -66,7 +66,7 @@ def plot_emg_channels_2cols(emg_data):
 
 
 #-------------------------------------------------------------------------------------------
-# Function to filter the data
+# Functions to filter the data
 def averaging(array, point_to_avarage):
     """
     Apply a simple moving average filter to an array.
@@ -110,6 +110,8 @@ def scale_synergy_signal(X, emg_data):
     X_scaled = ((X - X_min) / (X_max - X_min)) * (emg_max - emg_min) + emg_min
     X_scaled = np.maximum(X_scaled, 0)  # Ensures W_scaled is non-negative
     return X_scaled
+
+
 
 
 
