@@ -7,7 +7,7 @@ import numpy as np
 import rosbag
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, iirnotch
 
 
 # NMF implementation

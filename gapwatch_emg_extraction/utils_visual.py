@@ -37,7 +37,7 @@ def plot_emg_channels_2cols(emg_data):
     Plot each EMG channel in a separate subplot, organized into two columns.
 
     Args:
-        emg_data (ndarray): 2D array of EMG data with shape (n_channels, n_samples).
+        emg_data (ndarray): 2D array of EMG data with shape (n_emg_channels, n_samples).
 
     Returns:
         None. Displays a matplotlib figure with subplots for each channel.
@@ -63,7 +63,7 @@ def plot_emg_channels_2cols(emg_data):
 
 
 #-------------------------------------------------------------------------------------------
-def plot_raw_vs_filtered_channels_2cols(raw_emg, filtered_emg):
+def plot_raw_vs_filtered_channels_2cols(raw_emg, filtered_emg, title=''):
     """
     Plot raw and filtered EMG signals in subplots, organized into two columns.
 
@@ -86,7 +86,7 @@ def plot_raw_vs_filtered_channels_2cols(raw_emg, filtered_emg):
         ax = axes[row, col]
 
         ax.plot(time, raw_emg[i], label='Raw', alpha=0.6)
-        ax.plot(time, filtered_emg[i], label='Filtered', linestyle='--')
+        ax.plot(time, filtered_emg[i], label='Filtered')
         ax.set_title(f'Channel {i}', fontsize=8)
 
         if row == 7:
@@ -95,14 +95,14 @@ def plot_raw_vs_filtered_channels_2cols(raw_emg, filtered_emg):
             ax.set_ylabel("Activation")
 
         ax.legend(fontsize=6)
-    fig.suptitle("Filtered vs Raw - EMG Channels Overview")
+    fig.suptitle(title)
 
     plt.tight_layout()
     plt.show()
 
 
 #-------------------------------------------------------------------------------------------
-def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
+def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=''):
     """
     Plot a comprehensive overview of EMG signal decomposition using synergies.
 
@@ -114,9 +114,9 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
 
     Args:
         emg_data (ndarray): Raw EMG data (n_samples x n_muscles).
-        Z_reconstructed (ndarray): Reconstructed EMG from synergy model (same shape).
-        U (ndarray): Synergy activation matrix (n_samples x n_synergies).
-        S_m (ndarray): Synergy weights matrix (n_synergies x n_muscles).
+        E_reconstructed (ndarray): Reconstructed EMG from synergy model (same shape).
+        W (ndarray): Synergy activation matrix (n_samples x n_synergies).
+        H (ndarray): Synergy weights matrix (n_synergies x n_emg_channel).
         selected_synergies (int): Number of synergies used in the model.
 
     Returns:
@@ -125,11 +125,12 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
     
     print(f'\nPlotting results...\n\n')
 
-    U_scaled = scale_synergy_signal(U, emg_data)
+    W_scaled = scale_synergy_signal(W, emg_data)
 
 
     plt.figure(figsize=(10, 8))
-    
+    plt.suptitle(title, fontsize=16)
+
     # Panel 1: Original EMG Signals
     plt.subplot(4, 1, 1)
     plt.plot(emg_data)
@@ -139,7 +140,7 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
     
     # Panel 2: Reconstructed EMG Signals
     plt.subplot(4, 1, 2)
-    plt.plot(Z_reconstructed, linestyle='--')
+    plt.plot(E_reconstructed)
     plt.title(f'Reconstructed EMG ({selected_synergies} Synergies)')
     plt.ylabel('Amplitude (mV)')
     plt.xticks([])
@@ -147,7 +148,7 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
     # Panel 3: Synergy Activation Patterns over time
     plt.subplot(4, 1, 3)
     for i in range(selected_synergies):
-        plt.plot(U_scaled[:, i], label=f'Synergy {i+1}')
+        plt.plot(W_scaled[:, i], label=f'Synergy {i+1}')
     plt.title('Synergy Activation Over Time')
     plt.ylabel('Activation')
     plt.legend(loc='upper right', ncol=selected_synergies)
@@ -156,7 +157,7 @@ def plot_all_results(emg_data, Z_reconstructed, U, S_m, selected_synergies):
     # Panel 4: Synergy Weighting Patterns
     plt.subplot(4, 1, 4)
     for i in range(selected_synergies):
-        plt.plot(S_m[i, :], 'o-', label=f'Synergy {i+1}')
+        plt.plot(H[i, :], 'o-', label=f'Synergy {i+1}')
     plt.title('Synergy Weighting Patterns')
     plt.xlabel('EMG Channel')
     plt.ylabel('Weight')
