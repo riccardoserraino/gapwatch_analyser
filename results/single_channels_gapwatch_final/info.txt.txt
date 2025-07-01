@@ -1,0 +1,1 @@
+In this folder we can observed all the single channels plotted over time samples (over time basically), showing the difference between some of the channel and the low activation of channels 3, 10, 11. The name of the files is the same with respect to the hand motion adopted in the folder "SNMF_gapwatch_final"

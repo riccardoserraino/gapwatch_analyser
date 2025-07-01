@@ -1,0 +1,1 @@
+In this folder we can observe all the plot obtained extracting synergies from all the specimen datasets, then the extracted synergy and the activation matrix are plotted (bottom 2 plots) and their dot product is plotted in the second figure, showing that there consistency in the synergy evaluation data acquired.
