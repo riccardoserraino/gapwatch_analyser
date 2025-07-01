@@ -104,61 +104,62 @@ def nmf_emg(emg_data, n_components, init, max_iter, l1_ratio, alpha_W, random_st
     and their activations from EMG data.
 
     Args:
-        emg_data (ndarray): Input EMG data matrix of shape (n_samples, n_muscles).
+        emg_data (ndarray): Input EMG data matrix of shape (n_muscle, n_samples).
         n_components (int): Number of synergies (components) to extract.
-        init (str): Initialization method for NMF (e.g., 'nndsvd', 'random').
+        init (str): Initialization method for NMF (e.g. for sparse, 'nndsvd', 'random').
         max_iter (int): Maximum number of iterations before stopping.
         l1_ratio (float): L1 regularization ratio (between 0 and 1).
-        alpha_W (float): Regularization strength for the activation matrix U.
+        alpha_W (float): Regularization strength for the activation matrix U (sparsity coefficient).
         random_state (int): Random seed for reproducibility.
 
     Returns:
-        W (ndarray): Synergy activations over time (neural drive), shape (n_samples, n_components).
-        H (ndarray): Muscle synergy matrix (muscle weights), shape (n_components, n_muscles).
+        W (ndarray): Muscle synergy matrix (muscle weights), shape (n_muscles, n_components).
+        H (ndarray): Synergy activations over time (neural drive), shape (n_components, n_samples).
     """
 
-    # Pushing initial negative data to 0 for NMF processing
-    #emg_data_non_negative = np.maximum(0, emg_data)  # Ensure all values are non-negative
-    
     print("\nApplying NMF...")
     nmf = NMF(n_components=n_components, init=init, max_iter=max_iter, l1_ratio=l1_ratio, alpha_W=alpha_W, random_state=random_state) # Setting Sparse NMF parameters
-    W = nmf.fit_transform(emg_data)         # Synergy activations over time (Neural drive matrix)
-    H = nmf.components_                   # Muscle patterns (Muscular synergy matrix)
-    
+    H_T = nmf.fit_transform(emg_data)         # Synergy activations over time (Neural drive matrix)
+    W_T = nmf.components_                     # Channels patterns (Muscular synergy activation matrix)
+ 
+ 
     # Transpose W and H to match the correct shapes if needed
-    if W.shape[0] != emg_data.shape[0]:
-        W = W.T         # Ensure U has shape (n_samples, n_synergies)
-    if H.shape[0] != n_components:
-        H = H.T     # Ensure S_m has shape (n_synergies, n_muscles)
+    if H_T.shape[0] == emg_data.shape[0]:
+        H = H_T.T         
+    else:
+        H = H_T
+    if W_T.shape[0] == n_components:
+        W = W_T.T 
+    else:
+        W = W_T   
+
     print("NMF completed.\n")
+
     return W, H
 
 
 
 #---------------------------------------------------------------------------------------------
-def nmf_emg_reconstruction(W, H, n_synergies):
+def nmf_emg_reconstruction(W, H, final_emg_for_nmf):
     """
     Reconstructs the EMG signal using a selected number of NMF components (synergies).
     
     Args:
-        W (ndarray): Neural drive matrix (temporal activations), shape (n_samples, total_synergies).
-        H (ndarray): Muscle synergy matrix (muscle weights), shape (total_synergies, n_muscles).
-        n_synergies (int): Number of synergies to use for reconstruction.
-
+        W (ndarray): Muscle synergy matrix (muscle weights), shape (n_muscles, n_components).
+        H (ndarray): Synergy activations over time (neural drive), shape (n_components, n_samples).
+        final_emg_for_nmf (ndarray): Original EMG data matrix used for NMF, shape (n_samples, n_muscles).
     Returns:
-        reconstructed (ndarray): Reconstructed EMG data, shape (n_samples, n_muscles).
+        reconstructed (ndarray): Reconstructed EMG data, shape (n_muscles, n_samples).
     """
 
-    print(f"\nReconstructing the signal with {n_synergies} synergies...")
-    # Select the first n_synergies components
-    W_rec = W[:, :n_synergies]
-    H_rec = H[:n_synergies, :]
+    print(f"\nReconstructing the signal with selected number of synergies...")
+    reconstructed_nmf = np.dot(W, H)
+    # Ensure the reconstructed signal has the same shape as the original EMG data fro plotting comparisons
+    if reconstructed_nmf.shape[0] != final_emg_for_nmf.shape[0]:
+        reconstructed_nmf = reconstructed_nmf.T  # Transpose if needed to match (n_channels, n_samples)
+    print("Reconstruction check completed.\n")
 
-    # Reconstruct the original data from the selected components
-    reconstructed = np.dot(W_rec, H_rec)
-    print("Reconstruction completed.\n")
-    return reconstructed
-
+    return reconstructed_nmf
 
 
 

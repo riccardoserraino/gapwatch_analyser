@@ -2,7 +2,7 @@
 # Libraries
 ###########################################################################################################
 
-# General purpose 
+# General purpose and plotting
 import numpy as np
 import rosbag
 import pandas as pd
@@ -12,14 +12,6 @@ from scipy.signal import butter, filtfilt, iirnotch
 
 # NMF implementation
 from sklearn.decomposition import NMF
-
-# Autoencoder implementation
-'''import torch 
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import random'''
-
 # PCA implementation
 from sklearn.decomposition import PCA
 

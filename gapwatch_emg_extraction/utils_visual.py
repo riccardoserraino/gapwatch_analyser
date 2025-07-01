@@ -125,7 +125,7 @@ def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=
     
     print(f'\nPlotting results...\n\n')
 
-    W_scaled = scale_synergy_signal(W, emg_data)
+    #W_scaled = scale_synergy_signal(W, emg_data)
 
     channels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]  # Assuming 16 EMG channels, adjust as needed
 
@@ -153,24 +153,26 @@ def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=
     # Panel 3: Synergy Activation Patterns over time
     plt.subplot(4, 1, 3)
     for i in range(selected_synergies):
-        plt.plot(W_scaled[:, i], label=f'Synergy {i+1}')
+        plt.plot(W[:, i], 'o-', label=f'Synergy {i+1}')
+    plt.title('Synergy Weighting Patterns')
+    plt.xlabel('EMG Channel')
+    plt.ylabel('Weight')
+    plt.legend(loc='upper right', ncol=selected_synergies)
+    plt.xticks(channels)  
+
+    
+    # Panel 4: Synergy Weighting Patterns
+    plt.subplot(4, 1, 4)
+    for i in range(selected_synergies):
+        plt.plot(H[i, :],  label=f'Synergy {i+1}')
     plt.title('Synergy Activation Over Time')
     plt.ylabel('Amplitude (mV)')
     plt.xlabel('Time (samples)')
     plt.legend(loc='upper right', ncol=selected_synergies)
     plt.xticks()
-
-    # Panel 4: Synergy Weighting Patterns
-    plt.subplot(4, 1, 4)
-    for i in range(selected_synergies):
-        plt.plot(H[i, :], 'o-', label=f'Synergy {i+1}')
-    plt.title('Synergy Weighting Patterns')
-    plt.xlabel('EMG Channel')
-    plt.ylabel('Weight')
-    plt.legend(loc='upper right', ncol=selected_synergies)
-    plt.xticks(channels)
-
+    
     plt.tight_layout()
     plt.show()
 
 
+#-------------------------------------------------------------------------------------------
