@@ -37,7 +37,7 @@ def scale_synergy_signal(X, emg_data):
 
 # Band-pass 10-500Hz, Notch 50Hz
 # 1. Bandpass filter design
-def butter_bandpass(signal, fs, lowcut=10, highcut=500, order=5):
+def butter_bandpass(signal, fs, lowcut=20, highcut=500, order=5):
     """Applies a Butterworth bandpass filter to the signal."""
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -72,65 +72,11 @@ def preprocess_emg(emg_signal, fs):
     return rms_signal
 
 
-
-#-------------------------------------------------------------------------------------------
-# Function to align baselines of multiple signals
-
-def align_signal_baselines(signals, method='zero'):
-    """
-    Aligns all signals to the same baseline.
-
-    Parameters:
-    - signals: list of 1D numpy arrays
-    - method: 'mean', 'first', or 'min'
-
-    Returns:
-    - list of aligned signals
-    """
-    if method == 'mean':
-        offsets = [np.mean(s) for s in signals]
-    elif method == 'first':
-        offsets = [s[0] for s in signals]
-    elif method == 'min':
-        offsets = [np.min(s) for s in signals]
-    elif method == 'zero':
-        offsets = [np.min(s) for s in signals]
-    else:
-        raise ValueError("Invalid method")
-
-    reference = np.mean(offsets)  # Align to the group mean
-    return [s - (off - reference) for s, off in zip(signals, offsets)]
-
-
-#-------------------------------------------------------------------------------------------
-
-
-# Butterworth filtering alone - first approach lowpass filtering (approach above is the correct one)
-def butterworth_filter(signal, cutoff=10, fs=2000, order=4):
-    """
-    Apply a low-pass Butterworth filter to 1D signal.
-    
-    Parameters:
-    - signal: array-like
-    - cutoff: cutoff frequency (Hz)
-    - fs: sampling rate (Hz)
-    - order: filter order
-
-    Returns:
-    - Filtered signal
-    """
-    nyq = 0.5 * fs
-    norm_cutoff = cutoff / nyq
-    b, a = butter(order, norm_cutoff, btype='low', analog=False)
-    return filtfilt(b, a, signal)
-
-
-
 #-------------------------------------------------------------------------------------------
 # Function to compute the Moore–Penrose pseudo-inverse of a matrix
 def compute_pseudo_inverse(matrix):
     """
-    Computes the Moore–Penrose pseudo-inverse of a matrix.
+    Computes the Moore-Penrose pseudo-inverse of a matrix.
 
     Args:
         matrix (ndarray): Input matrix of shape (n_samples, n_synergies) or similar.
@@ -138,7 +84,7 @@ def compute_pseudo_inverse(matrix):
     Returns:
         pseudo_inverse (ndarray): Pseudo-inverse of the input matrix.
     """
-    print("\nComputing pseudo-inverse of the neural matrix...")
+    print("\nComputing pseudo-inverse of the neural matrix W from specimen dataset...")
     pseudo_inverse = np.linalg.pinv(matrix)
     print("Input matrix shape:", matrix.shape)
     print("Pseudo-inverse shape:", pseudo_inverse.shape)

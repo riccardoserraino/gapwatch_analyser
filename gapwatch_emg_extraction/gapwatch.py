@@ -14,16 +14,43 @@ selected_topic = '/emg'  # ROS topic to read EMG messages from
 # List of available bag files for EMG recordings
 #-----------------------------------------------------------------------
 # Specimen bag files
-power_grasp = 'dataset/power_grasp.bag'
+s_power = "dataset/power_grasp1.bag"
+s_pinch = "dataset/pinch1.bag"
+s_ulnar = "dataset/ulnar1.bag"
+s_thumb_up = "dataset/thumb_up1.bag"
+s_sto = "dataset/sto1.bag"
 
-pinch_grasp = 'dataset/pinch_grasp.bag'
-ulnar_grasp = 'dataset/ulnar_grasp.bag'
+s_bottle = "dataset/bottle1.bag"
+s_pen = "dataset/pen1.bag"
+s_phone = "dataset/phone1.bag"
+s_tablet = "dataset/tablet1.bag"
+s_pinza = "dataset/pinza1.bag"
 
-test_con_mattia = 'dataset/test_con_mattia.bag'
+s_thumb = "dataset/thumb1.bag"
+s_index = "dataset/index1.bag"
+s_middle = "dataset/middle1.bag"
+s_ring = "dataset/ring1.bag"
+s_little = "dataset/little1.bag"
 
 #-----------------------------------------------------------------------
 # Test bag files (optional)
+power = "dataset/power_grasp2.bag"
+pinch = "dataset/pinch2.bag"
+ulnar = "dataset/ulnar2.bag"
+thumb_up = "dataset/thumb_up2.bag"
+sto = "dataset/sto2.bag"
 
+bottle = "dataset/bottle2.bag"
+pen = "dataset/pen2.bag"
+phone = "dataset/phone2.bag"
+tablet = "dataset/tablet2.bag"
+pinza = "dataset/pinza2.bag"
+
+thumb = "dataset/thumb2.bag"
+index = "dataset/index2.bag"
+middle = "dataset/middle2.bag"
+ring = "dataset/ring2.bag"
+little = "dataset/little2.bag"
 
 
 ########################################################################
@@ -37,8 +64,8 @@ emg_data_specimen = []
 timestamps_specimen = []
 
 # Choose which bag file to load for specimen and analysis
-bag_path_specimen = ulnar_grasp            # <-- Change here to use a different file
-#bag_path_test = test_con_mattia
+bag_path_specimen = s_ring     # <-- Change here to use a different file
+#bag_path_test = power
 
 # Open the bag and extract EMG values from messages
 with rosbag.Bag(bag_path_specimen, 'r') as bag:
@@ -51,13 +78,9 @@ with rosbag.Bag(bag_path_specimen, 'r') as bag:
             print("Message missing expected fields:", e)
             break
 
-# Print the total number of EMG values collected
-print(len(emg_data_specimen))
-
-# Print the recording duration in seconds (needed for the filtering process)
-duration = timestamps_specimen[-1] - timestamps_specimen[0]
-print(f"Recording duration: {duration} seconds")
-
+# Convert to numpy arrays
+emg_data_specimen = np.array(emg_data_specimen)
+timestamps_specimen = np.array(timestamps_specimen)
 
 #-----------------------------------------------------------------------
 # Load EMG data from a test bag file (optional)
@@ -82,11 +105,19 @@ for i in range(int(len(emg_data_specimen)/16)):
     selector += 16                                   # Move to next block
     print("Sample number: ", i)
 
-# Print the shape of the final EMG matrix
+# Print shape information of extracted data
+print(f"Acquired EMG data shape: {emg_data_specimen.shape}")  # Should be (n_samples, n_channels)
+
+reshaped_timestamps = timestamps_specimen[::16]
+reshaped_timestamps_int = len(reshaped_timestamps)
+print(f"Reshaped timestamps shape: {reshaped_timestamps.shape}")  
+print(f"Timestamps count: {reshaped_timestamps_int}")
+duration = reshaped_timestamps[-1] - reshaped_timestamps[0]
+print(f"Duration of EMG recording: {duration:.5f} s")
+
+# Print shape information of reshaped data
 print("Final EMG shape:", raw_emg.shape)
-# Print the first channel shape
-channel_shape = raw_emg[0].shape[0]
-print("First channel shape:", channel_shape)  # Should be (N,)
+
 
 #-----------------------------------------------------------------------
 # Test reshaping (optional)
@@ -99,32 +130,20 @@ print("First channel shape:", channel_shape)  # Should be (N,)
 
 #-----------------------------------------------------------------------
 # Specimen filtering
-fs=channel_shape/duration
-print("Sampling frequency fs =", fs)
+s_fs=reshaped_timestamps_int/duration
+print(f"Sampling frequency fs = {s_fs:.2f} Hz")
 
 # Band-pass + Notch filtering + rms
-filtered_emg= np.array([preprocess_emg(raw_emg[i, :], fs=fs) for i in range(raw_emg.shape[0])])
+filtered_emg= np.array([preprocess_emg(raw_emg[i, :], fs=s_fs) for i in range(raw_emg.shape[0])])
 
 
 #-----------------------------------------------------------------------
 # Test filtering (optional)
-'''
-# Butterworth filtering
-butt_filtered_emg_ch = np.array([butterworth_filter(raw_emg[i, :], cutoff=10, fs=fs) for i in range(raw_emg.shape[0])])
-butt_filtered_aligned_emg = np.array(align_signal_baselines(butt_filtered_emg_ch, method='mean'))
-'''
 
 
 ########################################################################
 # Data Plotting - Plot first insights into EMG data aquired from ROS bag (optional)
 ########################################################################
-'''
-# Butterworth insights section------------------------------------------
-# Plot raw vs butterworth filtered EMG data
-plot_raw_vs_filtered_channels_2cols(raw_emg, butt_filtered_emg_ch, title='Raw vs Lowpass Butterworth Filtered EMG Channels')
-plot_all_channels(butt_filtered_aligned_emg, title='Lowpass Butterworth Filtered EMG Channels')
-'''
-
 
 # Plot all raw channels in a single plot
 #plot_all_channels(raw_emg, title='Raw EMG Channels')         
@@ -134,9 +153,7 @@ plot_all_channels(butt_filtered_aligned_emg, title='Lowpass Butterworth Filtered
 # Plotting with filter applied to raw data
 #plot_raw_vs_filtered_channels_2cols(raw_emg, filtered_emg, title='Raw vs Band-pass & Notch Filtered EMG Channels')
 #plot_all_channels(filtered_emg, title='Band-pass & Notch Filtered EMG Channels')
-#plot_emg_channels_2cols(filtered_emg)
-
-
+plot_emg_channels_2cols(filtered_emg)
 
 
 
@@ -172,25 +189,25 @@ final_emg_for_nmf = filtered_emg.T  # Transpose for sklearn compatibility
 
 # Decompose EMG using sparse NMF into synergies and activation patterns
 W, H = nmf_emg(final_emg_for_nmf, n_components=optimal_synergies_nmf,
-                 init='nndsvd', max_iter=500, l1_ratio=0.1, alpha_W=0.001, random_state=42)
+                 init='nndsvd', max_iter=500, l1_ratio=0.15, alpha_W=0.0005, random_state=42)
 
 # Reconstruct the EMG from extracted synergies
 reconstructed_nmf = nmf_emg_reconstruction(W, H, optimal_synergies_nmf)
 
 # Plot original, reconstructed, and synergy data
-#plot_all_results(final_emg_for_nmf, reconstructed_nmf, W, H, optimal_synergies_nmf, title='NMF Synergy Extraction Results')
+plot_all_results(final_emg_for_nmf, reconstructed_nmf, W, H, optimal_synergies_nmf, title='NMF Synergy Extraction Results - Tablet Grasp')
 
 
 
 
 ########################################################################
-'''
-# Pseudo inverse of U matrix (neural matrix H representing activation patterns)
-U_pinv = compute_pseudo_inverse(U)
 
-estimated_S_m = np.dot(U_pinv, final_emg_for_nmf)
-print("Estimated Synergy Matrix S_m from U_pinv shape:", estimated_S_m.shape)   
-'''
+# Pseudo inverse of H matrix (neural matrix representing activation patterns)
+W_pinv = compute_pseudo_inverse(W)
+
+estimated_H = np.dot(W_pinv, final_emg_for_nmf)
+print("Estimated Synergy Matrix H from W_pinv shape:", estimated_H.shape)   
+
 
 
 

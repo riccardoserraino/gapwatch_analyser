@@ -32,7 +32,7 @@ def plot_all_channels(emg_data, title=''):
 
 
 #-------------------------------------------------------------------------------------------
-def plot_emg_channels_2cols(emg_data):
+def plot_emg_channels_2cols(emg_data, ):
     """
     Plot each EMG channel in a separate subplot, organized into two columns.
 
@@ -127,33 +127,39 @@ def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=
 
     W_scaled = scale_synergy_signal(W, emg_data)
 
+    channels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]  # Assuming 16 EMG channels, adjust as needed
 
     plt.figure(figsize=(10, 8))
-    plt.suptitle(title, fontsize=16)
+    plt.suptitle(title, fontsize=14)
 
     # Panel 1: Original EMG Signals
     plt.subplot(4, 1, 1)
     plt.plot(emg_data)
     plt.title('Original EMG Signals')
     plt.ylabel('Amplitude (mV)')
-    plt.xticks([])  # Remove x-axis labels for cleaner visualization
+    plt.xlabel('Time (samples)')
+    plt.xticks()
+
     
     # Panel 2: Reconstructed EMG Signals
     plt.subplot(4, 1, 2)
     plt.plot(E_reconstructed)
     plt.title(f'Reconstructed EMG ({selected_synergies} Synergies)')
     plt.ylabel('Amplitude (mV)')
-    plt.xticks([])
+    plt.xlabel('Time (samples)')
+    plt.xticks()
+
     
     # Panel 3: Synergy Activation Patterns over time
     plt.subplot(4, 1, 3)
     for i in range(selected_synergies):
         plt.plot(W_scaled[:, i], label=f'Synergy {i+1}')
     plt.title('Synergy Activation Over Time')
-    plt.ylabel('Activation')
+    plt.ylabel('Amplitude (mV)')
+    plt.xlabel('Time (samples)')
     plt.legend(loc='upper right', ncol=selected_synergies)
-    plt.xticks([])
-    
+    plt.xticks()
+
     # Panel 4: Synergy Weighting Patterns
     plt.subplot(4, 1, 4)
     for i in range(selected_synergies):
@@ -162,7 +168,7 @@ def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=
     plt.xlabel('EMG Channel')
     plt.ylabel('Weight')
     plt.legend(loc='upper right', ncol=selected_synergies)
-    plt.xticks([])
+    plt.xticks(channels)
 
     plt.tight_layout()
     plt.show()
