@@ -67,7 +67,7 @@ little = "dataset/little2.bag"
 emg_data_calibration = []
 timestamps_calibration = []
 
-bag_path_calibration = pen_c     # <-- Change calibration data here
+bag_path_calibration = power_c     # <-- Change calibration data here
 
 print("\nLoading calibration data...")
 # Open the bag and extract EMG values from messages
@@ -92,7 +92,7 @@ print("Loading calibration data completed.\n")
 emg_data_test = []
 timestamps_test = []
 
-bag_path_test = pen          # <-- Change test data here
+bag_path_test = power_c          # <-- Change test data here
 
 print("\nLoading test data...")
 with rosbag.Bag(bag_path_test, 'r') as bag:
@@ -257,14 +257,14 @@ max_synergies_nmf = 16
 final_emg_for_nmf = filtered_emg_c.T  
 
 W, H = nmf_emg(final_emg_for_nmf, n_components=optimal_synergies_nmf,
-                 init='nndsvd', max_iter=500, l1_ratio=0.15, alpha_W=0.0005, random_state=42)
+                 init='nndsvd', max_iter=500, l1_ratio=0.15, alpha_W=0.005, random_state=42)
 
 # Reconstruct the EMG from extracted synergies
 # For consistency check purposes
 reconstructed_nmf = nmf_emg_reconstruction(W, H, final_emg_for_nmf)
 
 # Plot original, reconstructed, and synergy data
-plot_all_results(final_emg_for_nmf, reconstructed_nmf, W, H, optimal_synergies_nmf, title='NMF Synergy Extraction Results - Tablet Grasp')
+#plot_all_results(final_emg_for_nmf, reconstructed_nmf, W, H, optimal_synergies_nmf, title='NMF Synergy Extraction Results')
 
 
 # Print shapes of extracted matrices
@@ -303,7 +303,53 @@ print(f" - Estimated Synergy Matrix H from W_pinv shape: {estimated_H.shape} \n"
 
 
 
+H_calibration = H
+H_test = estimated_H
+reconstructed_t = nmf_emg_reconstruction(W, H_test, filtered_emg_t.T)
+
+plot_all_results(filtered_emg_t.T, reconstructed_t, W, H_test, optimal_synergies_nmf)
+
+highest_value, correspondent_value, max_difference = find_max_difference(H_calibration)
+
+O = scale_differences(H_test, max_difference)
+print("\nInsights into the flexion/extention synergy matrix O:")
+print(f" - Highest value in calibration H: {highest_value}")
+print(f" - Corresponding value in test H: {correspondent_value}")
+print(f" - Maximum difference: {max_difference}")
+print(f" - Flexion/Extension synergy matrix O shape: {O.shape}\n")
+
+plot_sigma_matrix(O, title='Flexion/Extension Synergy Matrix O')
+
+
+'''
+H_calibration = H
+H_test = estimated_H
+
+# Plotting the synergy activation patterns over time of the Calibration data
+channels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]  # Assuming 16 EMG channels, adjust as needed
+for i in range(2):
+    plt.plot(W[:, i], 'o-', label=f'Synergy {i+1}')
+plt.title('Synergy Weighting Patterns')
+plt.xlabel('EMG Channel')
+plt.ylabel('Weight')
+plt.legend(loc='upper right', ncol=2)
+plt.xticks(channels) 
+
+
+# To define which synegy dominates throughout the Estimated synegy matrix H_test
+dominant_synergy = np.argmax(H_test, axis=0)
+dominant_matrix = np.zeros_like(H_test)
+dominant_matrix[dominant_synergy, np.arange(H_test.shape[1])] = 1
+plot_dominant_synergy_line(dominant_synergy, title='Dominant Synergy Line') 
+
+# To define which synergy can be interpreted as flexor
+diff_calib = H_calibration[0, :] - H_calibration[1, :]
+mean_diff = np.mean(diff_calib)
+# if mean_diff > 0:
+#     flexor_synergy = 0
+print("mean diff calibration W", mean_diff)
 
 
 
 
+'''

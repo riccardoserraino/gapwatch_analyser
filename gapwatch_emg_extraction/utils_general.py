@@ -6,7 +6,7 @@ from gapwatch_emg_extraction.config import *
 
 
 #-------------------------------------------------------------------------------------------
-# Function to scale the synergy activation matrix to the original EMG amplitude range
+# Function to scale the synergy activation matrix to the original EMG amplitude range (for plotting purposes)
 
 def scale_synergy_signal(X, emg_data):
     """
@@ -90,5 +90,102 @@ def compute_pseudo_inverse(matrix):
     print("Pseudo-inverse shape:", pseudo_inverse.shape)
     print("Pseudo-inverse computation completed.\n")
     return pseudo_inverse
+
+
+
+#-------------------------------------------------------------------------------------------
+
+def find_max_difference(matrix):
+    # Ensure the input is a numpy array for easier manipulation
+    matrix = np.array(matrix)
+    
+    # Initialize variables to track the highest value and its index
+    highest_value = float('-inf')
+    highest_index = (-1, -1)  # To store the row and column index of the highest value
+    
+    # Iterate through each value in the matrix
+    for i in range(matrix.shape[0]):  # Iterate over rows
+        for j in range(matrix.shape[1]):  # Iterate over columns
+            value = matrix[i, j]
+            if value > highest_value:
+                highest_value = value
+                highest_index = (i, j)
+    
+    # Get the row and column of the highest value
+    row, col = highest_index
+    
+    # Initialize corresponding value
+    corresponding_value = None
+    
+    # Check if the next row exists
+    if row + 1 < matrix.shape[0]:
+        corresponding_value = matrix[row + 1, col]
+    else:
+        corresponding_value = matrix[row - 1, col]  # if the highest value is found in the last row, take the corresponding previous row's value
+    
+    # Calculate the maximum difference if corresponding value exists
+    max_difference = None
+    if row + 1 < matrix.shape[0]:
+        max_difference = highest_value - corresponding_value
+    else:
+        max_difference = corresponding_value - highest_value
+    
+    return highest_value, corresponding_value, max_difference
+
+
+
+#-------------------------------------------------------------------------------------------
+
+def scale_differences(matrix, max_diff):
+    """
+    matrix: 2 x new_n_samples
+    max_diff: scalar from find_max_difference
+    """
+    matrix = np.array(matrix)
+    
+    # Step 1: compute the differences (row 0 - row 1) for each column
+    differences = matrix[0, :] - matrix[1, :]
+
+    # Step 2: scale with respect to max_diff (avoid division by 0)
+    if max_diff == 0:
+        scaled = np.zeros_like(differences)  # All zeros if no difference possible
+    else:
+        scaled = differences / max_diff
+
+    # Step 3: saturate values to stay between 0 and 1
+    saturated = np.clip(scaled, 0, 1)
+
+    # Step 4: reshape to 1 x new_n_samples
+    return saturated.reshape(1, -1)
+
+
+#-------------------------------------------------------------------------------------------
+
+def compute_flexion_extension_signals(H, max_flex=None, max_ext=None):
+    H = np.array(H)
+    flex = H[0, :]
+    ext = H[1, :]
+
+    if max_flex is None:
+        max_flex = np.max(flex)
+    if max_ext is None:
+        max_ext = np.max(ext)
+
+    norm_flex = np.clip(flex / max_flex, 0, 1)
+    norm_ext = np.clip(ext / max_ext, 0, 1)
+
+    return norm_flex.reshape(1, -1), norm_ext.reshape(1, -1)
+
+
+def compute_sigma_ref(H, max_diff=None):
+    diff = H[0, :] - H[1, :]
+    if max_diff is None:
+        max_diff = np.max(np.abs(diff))
+    sigma = diff / max_diff  # Now range approx [-1, 1]
+    sigma = np.clip((sigma + 1) / 2, 0, 1)  # Rescale to [0,1]
+    return sigma.reshape(1, -1)
+
+
+#-------------------------------------------------------------------------------------------
 
 

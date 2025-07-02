@@ -176,3 +176,53 @@ def plot_all_results(emg_data, E_reconstructed, W, H, selected_synergies, title=
 
 
 #-------------------------------------------------------------------------------------------
+
+
+def plot_sigma_matrix(scaled_matrix, title="Flexion-Extention Matrix"):
+    """
+    Plots a 1 x N matrix showing values between 0 and 1.
+    
+    Parameters:
+    - scaled_matrix: 1 x N numpy array
+    - title: optional title for the plot
+    """
+
+    scaled_matrix = np.array(scaled_matrix)
+    
+    if scaled_matrix.shape[0] != 1:
+        raise ValueError("Input must be a 1-row matrix (1 x new_n_samples)")
+
+    values = scaled_matrix.flatten()
+    x = np.arange(len(values))
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(x, values, color='g')
+    plt.ylim(0, 1.1)  # leave some space above 1
+    plt.xlabel("Time (samples)")
+    plt.ylabel("Flexion-Extention Value")
+    plt.title(title)
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+#-------------------------------------------------------------------------------------------
+
+def plot_dominant_synergy_line(dominant_synergy, title="Dominant Synergy Over Time"):
+    x = np.arange(len(dominant_synergy))
+    y = dominant_synergy
+
+    plt.figure(figsize=(10, 3))
+    plt.plot(x, y, drawstyle='steps-mid', color='purple', linewidth=2)
+    plt.yticks([0, 1], ['Synergy 0', 'Synergy 1'])
+    plt.xlabel("Sample Index")
+    plt.ylabel("Dominant Synergy")
+    plt.title(title)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+#-------------------------------------------------------------------------------------------
+
